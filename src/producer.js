@@ -16,14 +16,14 @@ const pulsarClient = new Pulsar.Client({
 const producer = await pulsarClient.createProducer({
     topic: config.pulsar.topic,
     producerName: `${config.app.name}--${uuidv4()}`,
-    messageRoutingMode: 'RoundRobinPartition',
-    maxPendingMessages: 1000,
+    messageRoutingMode: 'RoundRobinPartition', //publish messages to all partitions in round robin, while still making sure that messages of the same partition key go to the same partition for ordering
+    maxPendingMessages: 1000, 
     maxPendingMessagesAcrossPartitions: 10000,
-    sendTimeoutMs: 500,
+    sendTimeoutMs: 500, //time the broker has to acknowledge the receipt of a message before an error is thrown
     batchingEnabled: false, // set to true if you expect high number of messages and want to reduce load on producer
     batchingMaxPublishDelayMs: 50,
     batchingMaxMessages: 1000,
-    hashingScheme: 'Murmur3_32Hash'
+    hashingScheme: 'Murmur3_32Hash' //hashing is used to determine the partition a message is sent to, we choose murmur, as the standard algorythm is a java implementation
 });
 
 //producing 10 messages, then closing the producer & client
@@ -75,7 +75,6 @@ for (let i = 0; i < 10; i++) {
       // setting partitionKey to primary key of entity we are sending, guarantees all messages for this entity are sent to the same partition, thereby enabling consumption in order
       partitionKey: customerEvent.data.id,
       eventTimestamp: Date.now(),
-      //data needs to be a Buffer
       data: Buffer.from(JSON.stringify(customerEvent))
     }
 
